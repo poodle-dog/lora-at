@@ -27,3 +27,7 @@ class LoRaModule:
             return response_lines[0]  
         else:
             raise Exception(f"Error in response: {response_lines}")
+
+    def reset(self):
+        """Resets the module."""
+        return self.send_command("AT+RESET")
