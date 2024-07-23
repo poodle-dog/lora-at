@@ -32,6 +32,66 @@ class LoRaModule:
         """Resets the module."""
         return self.send_command("AT+RESET")
 
+    def set_mode(self, mode):
+        """Sets the module mode (0: Transmit/Receive, 1: Sleep)."""
+        return self.send_command(f"AT+MODE={mode}")
+
+    def set_baudrate(self, baudrate):
+        """Sets the UART baud rate."""
+        return self.send_command(f"AT+IPR={baudrate}")
+
+    def set_parameters(self, sf, bw, cr, preamble):
+        """Sets the LoRa RF parameters."""
+        return self.send_command(f"AT+PARAMETER={sf},{bw},{cr},{preamble}")
+
     def set_frequency(self, frequency):
         """Sets the LoRa center frequency (in Hz)."""
         return self.send_command(f"AT+BAND={frequency}")
+
+    def set_address(self, address):
+        """Sets the module address."""
+        return self.send_command(f"AT+ADDRESS={address}")
+
+    def set_network_id(self, network_id):
+        """Sets the LoRa network ID."""
+        return self.send_command(f"AT+NETWORKID={network_id}")
+
+    def send_data(self, address, data):
+        """Sends data to the specified address."""
+        payload_length = len(data)
+        return self.send_command(f"AT+SEND={address},{payload_length},{data}")
+
+    def set_password(self, password):
+        """Sets the AES128 encryption password."""
+        return self.send_command(f"AT+CPIN={password}")
+
+    def set_rf_power(self, power):
+        """Sets the RF output power (0-15 dBm)."""
+        return self.send_command(f"AT+CRFOP={power}")
+
+    def get_received_data(self):
+        """Checks for and returns received data (if any)."""
+        if self.ser.in_waiting > 0:
+            line = self.ser.readline().decode().strip()
+            if line.startswith("+RCV="):
+                parts = line[5:].split(",")
+                return {
+                    "address": int(parts[0]),
+                    "length": int(parts[1]),
+                    "data": parts[2],
+                    "rssi": int(parts[3]),
+                    "snr": int(parts[4]),
+                }
+        return None  # No data received
+
+    def get_firmware_version(self):
+        """Gets the firmware version."""
+        return self.send_command("AT+VER?")
+
+    def get_unique_id(self):
+        """Gets the module's unique ID."""
+        return self.send_command("AT+UID?")
+
+    def factory_reset(self):
+        """Resets all parameters to factory defaults."""
+        return self.send_command("AT+FACTORY")
