@@ -62,6 +62,35 @@ class TestLoRaModule(unittest.TestCase):
             # Ensure the response thread has finished
             response_thread.join()
 
+    def test_lora_set_frequency(self):
+        # Create instance of LoRaModule using the first pty
+        lora = LoRaModule(self.pty1)
+
+        # Open the second pty to simulate the receiving end
+        with serial.Serial(self.pty2, baudrate=115200, timeout=1) as receiver:
+            freq = 868500000
+
+            # Define expected response
+            expected_response = "+OK"
+
+            # Start a background thread to simulate the module's response
+            def respond():
+                time.sleep(0.1)  # Wait for the command to be sent
+                receiver.write(("+OK\r\n").encode())
+
+            import threading
+            response_thread = threading.Thread(target=respond)
+            response_thread.start()
+
+            # Send the command and get the response
+            response = lora.set_frequency(freq)
+
+            # Assert that the received response matches the expected response
+            self.assertEqual(response, expected_response)
+
+            # Ensure the response thread has finished
+            response_thread.join()
+
 if __name__ == '__main__':
     unittest.main()
 
