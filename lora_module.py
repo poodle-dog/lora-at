@@ -23,7 +23,7 @@ class LoRaModule:
                 break
             response_lines.append(line)
 
-        if response_lines[-1] == "+OK":
+        if (response_lines[-1] == "+OK") or (response_lines[-1] == "+READY"):
             return response_lines[0]  
         else:
             raise Exception(f"Error in response: {response_lines}")
@@ -31,3 +31,7 @@ class LoRaModule:
     def reset(self):
         """Resets the module."""
         return self.send_command("AT+RESET")
+
+    def set_frequency(self, frequency):
+        """Sets the LoRa center frequency (in Hz)."""
+        return self.send_command(f"AT+BAND={frequency}")
