@@ -13,7 +13,7 @@ class LoRaModule:
 
     def send_command(self, command):
         """Sends an AT command and waits for a response."""
-        command_with_newline = command + "\r\n"  
+        command_with_newline = command + "\r\n"
         self.ser.write(command_with_newline.encode())
 
         response_lines = []
@@ -23,10 +23,30 @@ class LoRaModule:
                 break
             response_lines.append(line)
 
-        if (response_lines[-1] == "+OK") or (response_lines[-1] == "+READY"):
-            return response_lines[0]  
+        if response_lines[-1] in ("+OK", "+READY"):
+            return response_lines[0]
+        elif "+ERR" in response_lines[-1]:
+            error_code = response_lines[-1].split("=")[-1]
+            self._handle_error(int(error_code))
         else:
-            raise Exception(f"Error in response: {response_lines}")
+            raise Exception(f"Unexpected response: {response_lines}")
+
+    def _handle_error(self, error_code):
+        """Handles error codes returned by the LoRa module."""
+        error_messages = {
+            1: "Missing newline or carriage return at the end of the AT command.",
+            2: "Command does not start with 'AT'.",
+            3: "Missing '=' symbol in the AT command.",
+            4: "Unknown command.",
+            10: "TX timeout.",
+            11: "RX timeout.",
+            12: "CRC error.",
+            13: "TX data exceeds 240 bytes.",
+            15: "Unknown error."
+        }
+        error_message = error_messages.get(error_code, "Unknown error code.")
+        raise Exception(f"Error {error_code}: {error_message}")
+
 
     def reset(self):
         """Resets the module."""
