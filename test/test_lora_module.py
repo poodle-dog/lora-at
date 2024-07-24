@@ -3,7 +3,7 @@ import serial
 import subprocess
 import time
 import unittest
-from lora_module import LoRaModule
+from lora_module.lora_module import LoRaModule
 
 class TestLoRaModule(unittest.TestCase):
 
