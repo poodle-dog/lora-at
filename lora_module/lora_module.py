@@ -5,6 +5,7 @@
 ########################################################################
 
 import serial
+from enum import Enum
 
 error_messages = {
     "AT_PARAM_ERROR": "Parameter of the command is wrong.",
@@ -14,9 +15,20 @@ error_messages = {
     "AT_RX_ERROR": "Error detection during the reception of the command."
 }
 
+class LoRaMode(Enum):
+    MODE_LORAWAN = 0
+    MODE_PROPRTY = 1
+
 class LoRaModule:
-    def __init__(self, port, baudrate=9600, timeout=1):
+    def __init__(
+            self, 
+            port, 
+            baudrate=9600, 
+            timeout=1, 
+            mode=LoRaMode.MODE_LORAWAN
+        ):
         self.ser = serial.Serial(port, baudrate, timeout=timeout)
+        self.mode = mode
 
     def send_command(self, command):
         """Sends an AT command and waits for a response."""
@@ -51,6 +63,10 @@ class LoRaModule:
         """Resets the module."""
         return self.send_command("ATZ")
     
+    def get_mode(self):
+        """Gets the operating mode of the module."""
+        return self.send_command(f"AT+OPMODE=?")
+    
     def set_mode(self, opmode):
         """Sets the operating mode of the module.
 
@@ -59,10 +75,10 @@ class LoRaModule:
         """
         return self.send_command(f"AT+OPMODE={opmode}")
     
-    def get_mode(self, opmode):
-        """Gets the operating mode of the module."""
-        return self.send_command(f"AT+OPMODE=?")
-    
+    def get_firmware_version(self):
+        """Gets the firmware version."""
+        return self.send_command("AT+VER=?")
+
     def set_band(self, frequency):
         """Sets the LoRa center frequency (in Hz)."""
         return self.send_command(f"AT+BAND={frequency}")
@@ -111,10 +127,6 @@ class LoRaModule:
                 }
         return None  # No data received
 
-    def get_firmware_version(self):
-        """Gets the firmware version."""
-        return self.send_command("AT+VER=?")
-
     def get_unique_id(self):
         """Gets the module's unique ID."""
         return self.send_command("AT+UID=?")
@@ -122,3 +134,13 @@ class LoRaModule:
     def factory_reset(self):
         """Resets all parameters to factory defaults."""
         return self.send_command("AT+FACTORY")
+
+class LoRaWAN(LoRaModule):
+    def send_data(self, port, confirmed, data):
+        return self.send_command(f"AT+SEND={port},{confirmed},{data}")
+
+
+class LoRaProp(LoRaModule):
+    def send_data(self, port, confirmed, data):
+        return self.send_command(f"AT+SEND {port} {confirmed} {data}")
+
