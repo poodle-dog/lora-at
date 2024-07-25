@@ -111,21 +111,6 @@ class LoRaModule:
         """Sets the RF output power (0-15 dBm)."""
         return self.send_command(f"AT+CRFOP={power}")
 
-    def get_received_data(self):
-        """Checks for and returns received data (if any)."""
-        if self.ser.in_waiting > 0:
-            line = self.ser.readline().decode().strip()
-            if line.startswith("+RCV="):
-                parts = line[5:].split(",")
-                return {
-                    "address": int(parts[0]),
-                    "length": int(parts[1]),
-                    "data": parts[2],
-                    "rssi": int(parts[3]),
-                    "snr": int(parts[4]),
-                }
-        return None  # No data received
-
     def get_unique_id(self):
         """Gets the module's unique ID."""
         return self.send_command("AT+UID=?")
@@ -202,6 +187,22 @@ class LoRaProp(LoRaModule):
     def send_data(self, rx_addr, data):
         payload_length = len(data)
         return self.send_command(f"AT+SEND={rx_addr},{payload_length},{data}")
+    
+    def get_received_data(self):
+        """Checks for and returns received data (if any)."""
+        if self.ser.in_waiting > 0:
+            line = self.ser.readline().decode().strip()
+            if line.startswith("+RCV="):
+                parts = line[5:].split(",")
+                return {
+                    "address": int(parts[0]),
+                    "length": int(parts[1]),
+                    "data": parts[2],
+                    "rssi": int(parts[3]),
+                    "snr": int(parts[4]),
+                }
+        return None  # No data received
+
 
     def factory_reset(self):
         """Restores device to mfg defaults
