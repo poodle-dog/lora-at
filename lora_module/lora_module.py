@@ -2,6 +2,8 @@
 
 ########################################################################
 ### Python class for interacting with LoRA module via serial AT cmds ###
+###   Developed/tested with REYAX RYLR993_Lite;                      ### 
+###   Believed compatible with other REYAX LoRA AT Modules           ###
 ########################################################################
 
 import serial
