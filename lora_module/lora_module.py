@@ -7,7 +7,7 @@
 import serial
 
 class LoRaModule:
-    def __init__(self, port, baudrate=115200, timeout=1):
+    def __init__(self, port, baudrate=9600, timeout=1):
         self.ser = serial.Serial(port, baudrate, timeout=timeout)
 
     def send_command(self, command):
