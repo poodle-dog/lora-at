@@ -6,6 +6,14 @@
 
 import serial
 
+error_messages = {
+    "AT_PARAM_ERROR": "Parameter of the command is wrong.",
+    "AT_BUSY_ERROR": "LoRa network is busy, so the command could not complete.",
+    "AT_TEST_PARAM_OVERFLOW": "Parameter is too long.",
+    "AT_NO_NETWORK_JOINED": "LoRa network is not joined.",
+    "AT_RX_ERROR": "Error detection during the reception of the command."
+}
+
 class LoRaModule:
     def __init__(self, port, baudrate=9600, timeout=1):
         self.ser = serial.Serial(port, baudrate, timeout=timeout)
@@ -16,56 +24,56 @@ class LoRaModule:
         self.ser.write(command_with_newline.encode())
 
         response_lines = []
+        status_line = ""
         while True:
             line = self.ser.readline().decode().strip()
-            if not line:  # Empty line indicates end of response
-                break
+            if not line:
+                continue  # Ignore empty lines
             response_lines.append(line)
+            if line in error_messages.keys() or line in ("OK", "+READY"):
+                status_line = line
+                break
 
-        if response_lines[-1] in ("+OK", "+READY"):
-            return response_lines[0]
-        elif "+ERR" in response_lines[-1]:
-            error_code = response_lines[-1].split("=")[-1]
-            self._handle_error(int(error_code))
+        if status_line in ("OK", "+READY"):
+            return response_lines[:-1] if response_lines else status_line
+        elif status_line in error_messages.keys():
+            error_code = status_line.split("=")[-1]
+            self._handle_error(error_code)
         else:
             raise Exception(f"Unexpected response: {response_lines}")
 
     def _handle_error(self, error_code):
         """Handles error codes returned by the LoRa module."""
-        error_messages = {
-            1: "Missing newline or carriage return at the end of the AT command.",
-            2: "Command does not start with 'AT'.",
-            3: "Missing '=' symbol in the AT command.",
-            4: "Unknown command.",
-            10: "TX timeout.",
-            11: "RX timeout.",
-            12: "CRC error.",
-            13: "TX data exceeds 240 bytes.",
-            15: "Unknown error."
-        }
         error_message = error_messages.get(error_code, "Unknown error code.")
         raise Exception(f"Error {error_code}: {error_message}")
 
-
     def reset(self):
         """Resets the module."""
-        return self.send_command("AT+RESET")
+        return self.send_command("ATZ")
+    
+    def set_mode(self, opmode):
+        """Sets the operating mode of the module.
 
-    def set_mode(self, mode):
-        """Sets the module mode (0: Transmit/Receive, 1: Sleep)."""
-        return self.send_command(f"AT+MODE={mode}")
+        opmode=0 : LoRAWAN
+        opmode=1 : Proprietary LoRA
+        """
+        return self.send_command(f"AT+OPMODE={opmode}")
+    
+    def get_mode(self, opmode):
+        """Gets the operating mode of the module."""
+        return self.send_command(f"AT+OPMODE=?")
+    
+    def set_band(self, frequency):
+        """Sets the LoRa center frequency (in Hz)."""
+        return self.send_command(f"AT+BAND={frequency}")
 
-    def set_baudrate(self, baudrate):
-        """Sets the UART baud rate."""
-        return self.send_command(f"AT+IPR={baudrate}")
+    def get_band(self):
+        """Retrieves the LoRa center frequency (in Hz)."""
+        return self.send_command("AT+BAND=?")
 
     def set_parameters(self, sf, bw, cr, preamble):
         """Sets the LoRa RF parameters."""
         return self.send_command(f"AT+PARAMETER={sf},{bw},{cr},{preamble}")
-
-    def set_frequency(self, frequency):
-        """Sets the LoRa center frequency (in Hz)."""
-        return self.send_command(f"AT+BAND={frequency}")
 
     def set_address(self, address):
         """Sets the module address."""
@@ -105,11 +113,11 @@ class LoRaModule:
 
     def get_firmware_version(self):
         """Gets the firmware version."""
-        return self.send_command("AT+VER?")
+        return self.send_command("AT+VER=?")
 
     def get_unique_id(self):
         """Gets the module's unique ID."""
-        return self.send_command("AT+UID?")
+        return self.send_command("AT+UID=?")
 
     def factory_reset(self):
         """Resets all parameters to factory defaults."""
