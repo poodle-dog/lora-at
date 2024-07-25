@@ -8,6 +8,7 @@ import serial
 from enum import Enum
 
 error_messages = {
+    "AT_ERROR": "Generic AT error",
     "AT_PARAM_ERROR": "Parameter of the command is wrong.",
     "AT_BUSY_ERROR": "LoRa network is busy, so the command could not complete.",
     "AT_TEST_PARAM_OVERFLOW": "Parameter is too long.",
@@ -24,11 +25,9 @@ class LoRaModule:
             self, 
             port, 
             baudrate=9600, 
-            timeout=1, 
-            mode=LoRaMode.MODE_LORAWAN
+            timeout=1
         ):
         self.ser = serial.Serial(port, baudrate, timeout=timeout)
-        self.mode = mode
 
     def send_command(self, command):
         """Sends an AT command and waits for a response."""
@@ -141,6 +140,79 @@ class LoRaWAN(LoRaModule):
 
 
 class LoRaProp(LoRaModule):
-    def send_data(self, port, confirmed, data):
-        return self.send_command(f"AT+SEND {port} {confirmed} {data}")
+    def __init__(self, port, baudrate=9600, timeout=1):
+        self.ser = serial.Serial(port, baudrate, timeout=timeout)
+        self.set_mode(LoRaMode.MODE_PROPRTY.value) 
+        self.reset() # Reset req'd for mode setting to take
+
+    def get_band(self):
+        """Gets current frequency setting, in Hz"""
+        return self.send_command(f"AT+BAND=?")
+
+    def set_band(self,frequency):
+        """Sets current frequency setting, in Hz 
+        e.g. frequency=915000000 for 915MHz
+        """
+        return self.send_command(f"AT+BAND={frequency}")
+
+    def get_parameter(self):
+        """Gets current rf parameter settings (sf, bw, cr, preamble)
+        sf: spreading factor
+        bw: bandwidth
+        cr: coding rate
+        preamble: programmed preamble
+
+        """
+        return self.send_command(f"AT+PARAMETER=?")
+
+    def set_parameter(self, sf, bw, cr, preamble):
+        """Sets rf parameter settings 
+        sf: spreading factor
+        bw: bandwidth
+        cr: coding rate
+        preamble: programmed preamble
+
+        """
+        return self.send_command(f"AT+PARAMETER={sf},{bw},{cr},{preamble}")
+
+    def get_address(self):
+        """Gets current node address (0-65535)"""
+        return self.send_command(f"AT+ADDRESS=?")
+
+    def set_address(self, address):
+        """Sets current node address (0-65535)"""
+        return self.send_command(f"AT+ADDRESS={address}")
+
+    def get_node_pin(self):
+        """Gets eight character node pin"""
+        return self.send_command(f"AT+CPIN=?")
+
+    def set_node_pin(self, node_pin):
+        """Sets eight character node pin"""
+        return self.send_command(f"AT+CPIN={node_pin}")
+
+    def get_tx_power(self):
+        """Gets RF transmit power (in dBm)"""
+        return self.send_command(f"AT+CRFOP=?")
+
+    def set_tx_power(self, pwr_dbm):
+        """Sets RF transmit power,in dBm - (0-22dBM)"""
+        return self.send_command(f"AT+CRFOP={pwr_dbm}")
+
+    def send_data(self, rx_addr, data):
+        payload_length = len(data)
+        return self.send_command(f"AT+SEND={rx_addr},{payload_length},{data}")
+
+    def factory_reset(self):
+        """Restores device to mfg defaults
+        BAND: 915MHz
+        UART: 115200baud
+        SF: 9
+        BW: 125kHz
+        CR: 1
+        Preamble Length: 12
+        Address: 0
+        NetID: 18
+        Tx Power: 22dBm"""
+        return self.send_command(f"AT+FACTORY")
 
