@@ -2,7 +2,7 @@ import argparse
 import socket
 import time
 from queue import Queue
-from lora_module.lora_module import LoRaProp
+from lora_module.lora_module.lora_module import LoRaProp
 
 def initialize_socket(host='localhost', port=8001):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
