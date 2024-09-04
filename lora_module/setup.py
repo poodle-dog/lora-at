@@ -8,7 +8,6 @@ setup(
     author_email='nash.reilly@twosixtech.com',
     packages=find_packages(),  
     install_requires=[
-        'serial',
         'pyserial',
     ],
     classifiers=[
