@@ -1,4 +1,10 @@
+certifi==2024.8.30
+charset-normalizer==3.3.2
 future==1.0.0
+idna==3.8
 iso8601==2.1.0
+lora-module==0.1.0
 pyserial==3.5
 PyYAML==6.0.2
+requests==2.32.3
+urllib3==2.2.2

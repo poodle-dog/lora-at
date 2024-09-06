@@ -1,6 +1,7 @@
 import argparse
 import socket
 import time
+import requests
 from queue import Queue
 from lora_module.lora_module import LoRaProp
 
@@ -71,6 +72,7 @@ if __name__ == '__main__':
 
     # Initialize the LoRa module
     lora = LoRaProp(args.device)
+    lora.set_address(100)
 
     # Initialize queues for Tx and Rx
     tx_queue = Queue()
