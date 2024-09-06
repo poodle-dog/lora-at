@@ -9,6 +9,7 @@ setup(
     packages=find_packages(),  
     install_requires=[
         'pyserial',
+        'requests',
     ],
     classifiers=[
         'Programming Language :: Python :: 3',
