@@ -12,6 +12,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     lora = LoRaProp(args.device)
+    lora.set_address(101)
     print("Starting LoRA Rx server")
     while True:
         response = lora.get_received_data()

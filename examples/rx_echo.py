@@ -14,12 +14,15 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
+    address = 101
     lora = LoRaProp(args.device)
-    print("Starting LoRA Rx server")
+    lora.set_address(address)
+    print(f"Starting LoRA Rx server at LoRA address {address}...")
     while True:
         response = lora.get_received_data()
         if response:
             print(response)
             time.sleep(0.1)
-            lora.send_data(f"echoing message: {response}")
+            echo_msg = f"echoing message: {response['data']}"
+            lora.send_data(response['address'], echo_msg)
 
