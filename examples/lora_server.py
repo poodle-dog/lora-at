@@ -39,7 +39,7 @@ def process_tx_queue(lora, tx_queue):
 def process_rx_queue(rx_queue):
     if not rx_queue.empty():
         message = rx_queue.get()
-        requests.post("http://localhost:5000/lora/recv",json={'message':message})
+        requests.post("http://localhost:8000/message/recv",json={'message':message})
         print(f"Sent LoRA message to server")
 
 def main_loop(lora, server_socket, tx_queue, rx_queue):

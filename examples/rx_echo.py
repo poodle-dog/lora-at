@@ -23,6 +23,6 @@ if __name__ == '__main__':
         if response:
             print(response)
             time.sleep(0.1)
-            echo_msg = f"echoing message: {response['data']}"
+            echo_msg = f"echoing message: {response['data']} to {address=}"
             lora.send_data(response['address'], echo_msg)
 
