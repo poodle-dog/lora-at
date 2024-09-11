@@ -219,3 +219,73 @@ class LoRaProp(LoRaModule):
         Tx Power: 22dBm"""
         return self.send_command(f"AT+FACTORY")
 
+class LoRAMesh(LoRaProp):
+    def __init__(self, port, baudrate=9600, timeout=1):
+        super().__init__(port, baudrate, timeout)
+        self.reset()
+        self.set_address(0) # Addr 0 == broadcast mode
+        self.received_sequences = []
+
+    def send_broadcast(self, data):
+        """Broadcast data to all LoRa nodes by setting the address field to 0."""
+        sequence_number = self._generate_sequence_number()
+        payload = sequence_number + data
+        payload_length = len(payload)
+        return self.send_command(f"AT+SEND=0,{payload_length},{payload}")
+
+    def relay_data(self, data, timeout=30):
+        """Relay received data if it hasn't been received before, based on sequence number."""
+        received_data = self.get_received_data()
+        if received_data:
+            sequence_number = received_data['data'][:12]  
+            if not self._has_received_sequence(sequence_number, timeout):
+                return self.send_broadcast(received_data['data'])
+        return None
+
+    def _generate_sequence_number(self):
+        """Generates a unique sequence number using the device UID."""
+        uid = self.get_unique_id()[0]  # Use UID as sequence number
+        return uid[:12]  
+
+    def _has_received_sequence(self, sequence_number, timeout):
+        """Checks if the sequence number has been received within a specified timeout."""
+        current_time = time.time()
+        # Remove entries older than the timeout
+        self.received_sequences = [
+            (seq, ts) for seq, ts in self.received_sequences
+            if current_time - ts <= timeout
+        ]
+        # Check if the sequence number is already in the list
+        for seq, ts in self.received_sequences:
+            if seq == sequence_number:
+                return True
+
+        # If sequence number is not found, store it in the cache
+        self._store_sequence(sequence_number)
+        return False
+
+    def _store_sequence(self, sequence_number):
+        """Stores the sequence number with the current timestamp."""
+        current_time = time.time()
+        self.received_sequences.append((sequence_number, current_time))
+
+        # Keep only the last 128 sequence numbers
+        if len(self.received_sequences) > 128:
+            self.received_sequences.pop(0)
+
+
+    def handle_collision(self):
+        """Handles signal collision by relaying at random times.
+
+        Default to random time b/t 100ms and 1 sec
+        """
+        import random
+        import time
+        delay = random.uniform(0.1, 1.0)  
+        time.sleep(delay)
+        self.relay_data(self.get_received_data())
+
+    def send_data_with_collision_prevention(self, data):
+        """Send data with collision prevention logic."""
+        self.send_broadcast(data)
+        self.handle_collision()
