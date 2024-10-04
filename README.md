@@ -40,18 +40,27 @@ Starting LoRA Rx server
 
 Note that your values for `rssi` and `snr` will likely vary, as these values are environment-dependent. 
 
-# Testing
+# Making an Echo Node
 
-The `socat` command line program is used to test the module's AT command set. 
-
-To run the tests, run:
+A simple echo server is used in `examples/rx_echo.py`. This is useful for testing transmission. To run it, execute:
 
 ```shell
-python3 test/test_lora_module.py
+$ python3 examples/rx_prop.py /dev/ttyUSB0
 ```
 
-`socat` sets up two fake, linked serial devices. The `LoRaModule()` class is given one `pty` device to communicate to; the other is driven by the test program. The test program ensures that the AT command set sent by the module matches the expected serial traffic. 
+This will begin listening at LoRA address 101, and will echo back any messages received to the sending node. 
 
+This can also be run at login via a `systemd` service; see `templates/lora.service` for a service declaration file. 
+
+To run on a echo node system like a Raspberry Pi, run the following:
+
+```shell
+cp templates/lora.service /etc/systemd/system
+systemctl enable lora.service
+systemctl start lora.service
+```
+
+Note that some systems require `sudo` for copying into `/etc` or running `systemctl`. 
 
 # Design
 
