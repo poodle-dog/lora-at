@@ -1,0 +1,14 @@
+[Unit]
+Description=LoRa-AT RX Echo Python Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/mars/lora-at/examples
+ExecStart=/bin/bash -c 'source /home/mars/venv/bin/activate && python /home/mars/lora-at/examples/rx_echo.py /dev/ttyS0'
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
